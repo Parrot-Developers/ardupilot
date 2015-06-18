@@ -178,23 +178,16 @@ void AK8963_MPU9250_SPI_Backend::write(uint8_t address, const uint8_t *buf, uint
     _spi->transaction(tx, NULL, count + 1);
 }
 
-AP_Compass_AK8963_MPU9250::AP_Compass_AK8963_MPU9250(Compass &compass):
-    AP_Compass_AK8963(compass)
+/* AP_Compass_AK8963_MPU9250 Class */
+AP_Compass_AK8963_MPU9250::AP_Compass_AK8963_MPU9250(Compass &compass, AK8963_Backend *backend):
+    AP_Compass_AK8963(compass, backend)
 {
-}
-
-// detect the sensor
-AP_Compass_Backend *AP_Compass_AK8963_MPU9250::detect(Compass &compass)
-{
-    AP_Compass_AK8963_MPU9250 *sensor = new AP_Compass_AK8963_MPU9250(compass);
-    if (sensor == NULL) {
-        return NULL;
+    if (!_backend->init()) {
+        delete _backend;
+        _backend = NULL;
+        return;
     }
-    if (!sensor->init()) {
-        delete sensor;
-        return NULL;
-    }
-    return sensor;
+    init();
 }
 
 void AP_Compass_AK8963_MPU9250::_dump_registers()
@@ -223,26 +216,6 @@ bool AP_Compass_AK8963_MPU9250::_backend_init()
     _backend->write(MPUREG_I2C_MST_CTRL, I2C_MST_CLOCK_400KHZ);    /*  I2C configuration multi-master  IIC 400KHz */
 
     return true;
-}
-
-bool AP_Compass_AK8963_MPU9250::init() 
-{
-#if MPU9250_SPI_BACKEND
-    _backend = new AK8963_MPU9250_SPI_Backend();
-    if (_backend == NULL) {
-        hal.scheduler->panic(PSTR("_backend coudln't be allocated"));
-    }
-    if (!_backend->init()) {
-        delete _backend;
-        _backend = NULL;
-        return false;
-    }
-    return AP_Compass_AK8963::init();
-#else
-#error Wrong backend for AK8963 is selected
-    /* other backends not implented yet */
-    return false;
-#endif
 }
 
 void AP_Compass_AK8963_MPU9250::_register_write(uint8_t address, uint8_t value)
@@ -295,9 +268,10 @@ bool AP_Compass_AK8963_MPU9250::read_raw()
 
 }
 
-AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass) : 
+/* AP_Compass_AK8963 class */
+AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass, AK8963_Backend *backend) :
     AP_Compass_Backend(compass),    
-    _backend(NULL),
+    _backend(backend),
     _initialised(false),
     _state(STATE_CONVERSION),
     _last_update_timestamp(0),
@@ -385,7 +359,6 @@ bool AP_Compass_AK8963::init()
         error("_spi_sem->take failed\n");
         return false;
     }
-
 
     if (!_backend_init()) {
         _backend->sem_give();

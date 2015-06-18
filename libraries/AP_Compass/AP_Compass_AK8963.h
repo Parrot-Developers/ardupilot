@@ -35,7 +35,7 @@ class AK8963_Backend
 class AP_Compass_AK8963 : public AP_Compass_Backend
 {
 public:
-    AP_Compass_AK8963(Compass &compass);
+    AP_Compass_AK8963(Compass &compass, AK8963_Backend *backend);
 
     bool        init(void);
     void        read(void);
@@ -105,12 +105,8 @@ class AK8963_MPU9250_SPI_Backend: public AK8963_Backend
 class AP_Compass_AK8963_MPU9250: public AP_Compass_AK8963
 {
     public:
-        AP_Compass_AK8963_MPU9250(Compass &compass);
+        AP_Compass_AK8963_MPU9250(Compass &compass, AK8963_Backend *backend);
         ~AP_Compass_AK8963_MPU9250() {}
-        bool init();
-
-    // detect the sensor
-    static AP_Compass_Backend *detect(Compass &compass);
 
     private:
         bool       _backend_init();
