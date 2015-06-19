@@ -180,7 +180,8 @@ void AK8963_MPU9250_SPI_Backend::write(uint8_t address, const uint8_t *buf, uint
 
 /* AP_Compass_AK8963_MPU9250 Class */
 AP_Compass_AK8963_MPU9250::AP_Compass_AK8963_MPU9250(Compass &compass, AK8963_Backend *backend):
-    AP_Compass_AK8963(compass, backend)
+    AP_Compass_AK8963(compass),
+    _backend(backend)
 {
     if (!_backend->init()) {
         delete _backend;
@@ -265,16 +266,125 @@ bool AP_Compass_AK8963_MPU9250::read_raw()
     } else {
         return false;
     }
+}
+
+void AP_Compass_AK8963_MPU9250 ::_start_conversion()
+{
+    static const uint8_t address = AK8963_INFO;
+    /* Read registers from INFO through ST2 */
+    static const uint8_t count = 0x09;
+
+    _backend_init();
+    _backend->write(MPUREG_USER_CTRL, BIT_USER_CTRL_I2C_MST_EN);    /* I2C Master mode */
+    _backend->write(MPUREG_I2C_SLV0_ADDR, AK8963_I2C_ADDR | READ_FLAG);  /* Set the I2C slave addres of AK8963 and set for read. */
+    _backend->write(MPUREG_I2C_SLV0_REG, address); /* I2C slave 0 register address from where to begin data transfer */
+    _backend->write(MPUREG_I2C_SLV0_CTRL, I2C_SLV0_EN | count); /* Enable I2C and set @count byte */
+}
+
+bool AP_Compass_AK8963_MPU9250::_sem_take_nonblocking()
+{
+    return _backend->sem_take_nonblocking();
+}
+
+bool AP_Compass_AK8963_MPU9250::_sem_take_blocking()
+{
+    return _backend->sem_take_blocking();
+}
+
+bool AP_Compass_AK8963_MPU9250::_sem_give()
+{
+    return _backend->sem_give();
+}
+
+/* AP_Compass_AK8963_MPU9250 Class */
+AP_Compass_AK8963_I2C::AP_Compass_AK8963_I2C(Compass &compass, AP_HAL::I2CDriver *i2c, uint8_t addr):
+    AP_Compass_AK8963(compass),
+    _i2c(i2c),
+    _i2c_addr(addr)
+{
+    _semaphore = _i2c->get_semaphore();
+    init();
+}
+
+void AP_Compass_AK8963_I2C::_dump_registers()
+{
+}
+
+void AP_Compass_AK8963_I2C::_backend_reset()
+{
+}
+
+bool AP_Compass_AK8963_I2C::_backend_init()
+{
+    return true;
+}
+
+void AP_Compass_AK8963_I2C::_register_write(uint8_t address, uint8_t value)
+{
+    _i2c->writeRegister(_i2c_addr, address, value);
+}
+
+void AP_Compass_AK8963_I2C::_register_read(uint8_t address, uint8_t count, uint8_t *value)
+{
+    _i2c->readRegisters(_i2c_addr, address, count, value);
+}
+
+uint8_t AP_Compass_AK8963_I2C::_read_id()
+{
+    return 1;
+}
+
+bool AP_Compass_AK8963_I2C::read_raw()
+{
+    uint8_t rx[9] = {0};
+
+    _register_read(AK8963_INFO, 9, rx);
+
+    uint8_t st2 = rx[8]; /* End data read by reading ST2 register */
+
+#define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx + 1] << 8) | v[2*idx]))
+
+    if(!(st2 & 0x08)) { 
+        _mag_x = (float) int16_val(rx, 1);
+        _mag_y = (float) int16_val(rx, 2);
+        _mag_z = (float) int16_val(rx, 3);
+
+        if (is_zero(_mag_x) && is_zero(_mag_y) && is_zero(_mag_z)) {
+            return false;
+        }
+
+        return true;
+    } else {
+        return false;
+    }
 
 }
 
+void AP_Compass_AK8963_I2C ::_start_conversion()
+{
+}
+
+bool AP_Compass_AK8963_I2C::_sem_take_nonblocking()
+{
+    return _semaphore->take_nonblocking();
+}
+
+bool AP_Compass_AK8963_I2C::_sem_take_blocking()
+{
+    return _semaphore->take(0);
+}
+
+bool AP_Compass_AK8963_I2C::_sem_give()
+{
+    return _semaphore->give();
+}
+
 /* AP_Compass_AK8963 class */
-AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass, AK8963_Backend *backend) :
-    AP_Compass_Backend(compass),    
-    _backend(backend),
+AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass) :
+    AP_Compass_Backend(compass),
     _initialised(false),
-    _state(STATE_CONVERSION),
     _last_update_timestamp(0),
+    _state(STATE_CONVERSION),
     _last_accum_time(0)
 {
     _initialised = false;
@@ -283,7 +393,6 @@ AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass, AK8963_Backend *backend) 
     _accum_count = 0;
     _magnetometer_adc_resolution = AK8963_16BIT_ADC;
 }
-
 
 /* stub to satisfy Compass API*/
 void AP_Compass_AK8963::accumulate(void)
@@ -355,13 +464,13 @@ bool AP_Compass_AK8963::_self_test()
 bool AP_Compass_AK8963::init()
 {
     hal.scheduler->suspend_timer_procs();
-    if (!_backend->sem_take_blocking()) {
-        error("_spi_sem->take failed\n");
+    if (!_sem_take_blocking()) {
+        error("sem_take failed\n");
         return false;
     }
 
     if (!_backend_init()) {
-        _backend->sem_give();
+        _sem_give();
         return false;
     }
 
@@ -405,7 +514,7 @@ bool AP_Compass_AK8963::init()
     /* Register value to continuous measurement */
     _register_write(AK8963_CNTL1, AK8963_CONTINUOUS_MODE2 | _magnetometer_adc_resolution);
 
-    _backend->sem_give();
+    _sem_give();
 
     // register the compass instance in the frontend
     _compass_instance = register_compass();    
@@ -417,36 +526,6 @@ bool AP_Compass_AK8963::init()
 
     _initialised = true;
     return _initialised;
-}
-
-void AP_Compass_AK8963::_update()
-{
-    if (hal.scheduler->micros() - _last_update_timestamp < 10000) {
-        return;
-    }
-
-    if (!_backend->sem_take_nonblocking()) {
-        return;
-    }
-
-    switch (_state)
-       {
-        case STATE_CONVERSION:
-            _start_conversion();
-            _state = STATE_SAMPLE;
-            break;
-        case STATE_SAMPLE:
-            _collect_samples();
-            _state = STATE_CONVERSION;
-            break;
-        case STATE_ERROR:
-            break;
-        default:
-            break;
-    }
-
-    _last_update_timestamp = hal.scheduler->micros();
-    _backend->sem_give();
 }
 
 bool AP_Compass_AK8963::_calibrate()
@@ -493,17 +572,34 @@ void AP_Compass_AK8963::read()
     publish_field(field, _compass_instance);
 }
 
-void AP_Compass_AK8963::_start_conversion()
+void AP_Compass_AK8963::_update()
 {
-    static const uint8_t address = AK8963_INFO;
-    /* Read registers from INFO through ST2 */
-    static const uint8_t count = 0x09;
+    if (hal.scheduler->micros() - _last_update_timestamp < 10000) {
+        return;
+    }
 
-    _backend_init();
-    _backend->write(MPUREG_USER_CTRL, BIT_USER_CTRL_I2C_MST_EN);    /* I2C Master mode */
-    _backend->write(MPUREG_I2C_SLV0_ADDR, AK8963_I2C_ADDR | READ_FLAG);  /* Set the I2C slave addres of AK8963 and set for read. */
-    _backend->write(MPUREG_I2C_SLV0_REG, address); /* I2C slave 0 register address from where to begin data transfer */
-    _backend->write(MPUREG_I2C_SLV0_CTRL, I2C_SLV0_EN | count); /* Enable I2C and set @count byte */
+    if (!_sem_take_nonblocking()) {
+        return;
+    }
+
+    switch (_state)
+       {
+        case STATE_CONVERSION:
+            _start_conversion();
+            _state = STATE_SAMPLE;
+            break;
+        case STATE_SAMPLE:
+            _collect_samples();
+            _state = STATE_CONVERSION;
+            break;
+        case STATE_ERROR:
+            break;
+        default:
+            break;
+    }
+
+    _last_update_timestamp = hal.scheduler->micros();
+    _sem_give();
 }
 
 void AP_Compass_AK8963::_collect_samples()
