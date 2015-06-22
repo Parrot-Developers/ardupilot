@@ -55,9 +55,9 @@ private:
     virtual void        _register_write(uint8_t address, uint8_t value) = 0;
     virtual void        _backend_reset() = 0;
     virtual uint8_t     _read_id() = 0;
-    virtual bool	    _sem_take_nonblocking() = 0;
-    virtual bool	    _sem_take_blocking() = 0;
-    virtual bool	    _sem_give() = 0;
+    virtual bool        _sem_take_nonblocking() = 0;
+    virtual bool        _sem_take_blocking() = 0;
+    virtual bool        _sem_give() = 0;
     virtual void        _start_conversion() = 0;
     virtual bool        read_raw() = 0;
     virtual void        _dump_registers() {}

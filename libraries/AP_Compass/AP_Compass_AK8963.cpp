@@ -344,7 +344,7 @@ bool AP_Compass_AK8963_I2C::read_raw()
 
 #define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx + 1] << 8) | v[2*idx]))
 
-    if(!(st2 & 0x08)) { 
+    if(!(st2 & 0x08)) {
         _mag_x = (float) int16_val(rx, 1);
         _mag_y = (float) int16_val(rx, 2);
         _mag_z = (float) int16_val(rx, 3);
