@@ -35,7 +35,7 @@ struct PACKED data_frame {
 class AP_MPU6000_BusDriver
 {
     public:
-        virtual void init() = 0;
+        virtual void init(bool *fifo_mode) = 0;
         virtual void read8(uint8_t reg, uint8_t *val) = 0;
         virtual void write8(uint8_t reg, uint8_t val) = 0;
         enum bus_speed {
@@ -109,12 +109,13 @@ private:
     Vector3l _gyro_sum;
 #endif
     volatile uint16_t _sum_count;
+    bool _fifo_mode;
 };
 
 class AP_MPU6000_BusDriver_SPI : public AP_MPU6000_BusDriver
 {
     public:
-        void init();
+        void init(bool *fifo_mode);
         void read8(uint8_t reg, uint8_t *val);
         void write8(uint8_t reg, uint8_t val);
         void set_bus_speed(AP_HAL::SPIDeviceDriver::bus_speed speed);
@@ -134,7 +135,7 @@ class AP_MPU6000_BusDriver_I2C : public AP_MPU6000_BusDriver
 {
     public:
         AP_MPU6000_BusDriver_I2C(AP_HAL::I2CDriver *i2c, uint8_t addr);
-        void init();
+        void init(bool *fifo_mode);
         void read8(uint8_t reg, uint8_t *val);
         void write8(uint8_t reg, uint8_t val);
         void set_bus_speed(AP_HAL::SPIDeviceDriver::bus_speed speed);
