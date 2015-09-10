@@ -37,5 +37,7 @@ $(LOCAL_MODULE)-clean:
 	$(Q) rm -f $(ARDUCOPTER_BUILD_DIR)/$(ARDUCOPTER_FILENAME)
 	$(Q) rm -f $(TARGET_OUT_STAGING)/usr/bin/$(ARDUCOPTER_FILENAME)
 
+LOCAL_COPY_FILES = 50-arducopter.rc:etc/boxinit.d/
+
 include $(BUILD_CUSTOM)
 

@@ -1,0 +1,4 @@
+service arducopter /usr/bin/arducopter -A udp:192.168.42.255:14550:bcast -B /dev/ttyPA1 -C udp:192.168.42.255:14551:bcast -l /data/ftp/internal_000/APM/logs -t /data/ftp/internal_000/APM/terrain
+    class main
+    user root
+    disabled
