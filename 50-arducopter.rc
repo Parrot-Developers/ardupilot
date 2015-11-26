@@ -2,3 +2,4 @@ service arducopter /usr/bin/arducopter -A udp:192.168.42.255:14550:bcast -B /dev
     class main
     user root
     disabled
+    oneshot
