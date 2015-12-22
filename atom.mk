@@ -37,7 +37,13 @@ $(LOCAL_MODULE)-clean:
 	$(Q) rm -f $(ARDUCOPTER_BUILD_DIR)/$(ARDUCOPTER_FILENAME)
 	$(Q) rm -f $(TARGET_OUT_STAGING)/usr/bin/$(ARDUCOPTER_FILENAME)
 
+LOCAL_CONFIG_FILES := Config.in
 LOCAL_COPY_FILES = 50-arducopter.rc:etc/boxinit.d/
+ifeq ($(CONFIG_ARDUPILOT_MILOS),y)
+LOCAL_COPY_FILES += Tools/Frame_params/Parrot_Bebop2.param:etc/arducopter/bebop.parm
+else
+LOCAL_COPY_FILES += Tools/Frame_params/Parrot_Bebop.param:etc/arducopter/bebop.parm
+endif
 
 include $(BUILD_CUSTOM)
 
