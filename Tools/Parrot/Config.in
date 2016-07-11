@@ -1,0 +1,15 @@
+choice
+	prompt "Select bebop version for default ardupilot params"
+	default ARDUPILOT_BEBOP
+	help
+		This param is used to select the default param file which is to be
+		copied to /etc/arducopter/bebop.parm in order for ardupilot to use
+		it at first startup
+
+	config ARDUPILOT_BEBOP
+	bool "Use bebop v1 parameters"
+
+	config ARDUPILOT_MILOS
+	bool "Use bebop v2 parameters"
+
+endchoice
