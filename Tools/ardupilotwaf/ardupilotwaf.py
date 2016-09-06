@@ -16,48 +16,8 @@ SOURCE_EXTS = [
     '*.cpp',
 ]
 
-COMMON_VEHICLE_DEPENDENT_LIBRARIES = [
-    'AP_AccelCal',
-    'AP_ADC',
-    'AP_AHRS',
-    'AP_Airspeed',
-    'AP_Baro',
-    'AP_BattMonitor',
-    'AP_BoardConfig',
-    'AP_Buffer',
-    'AP_Common',
-    'AP_Compass',
-    'AP_Declination',
-    'AP_GPS',
-    'AP_HAL',
-    'AP_HAL_Empty',
-    'AP_InertialSensor',
-    'AP_Math',
-    'AP_Mission',
-    'AP_NavEKF',
-    'AP_NavEKF2',
-    'AP_Notify',
-    'AP_OpticalFlow',
-    'AP_Param',
-    'AP_Rally',
-    'AP_RangeFinder',
-    'AP_Scheduler',
-    'AP_SerialManager',
-    'AP_Terrain',
-    'AP_Vehicle',
-    'DataFlash',
-    'Filter',
-    'GCS_MAVLink',
-    'RC_Channel',
-    'StorageManager',
-    'AP_Tuning',
-    'AP_RPM',
-    'AP_RSSI',
-    'AP_Mount',
-    'AP_Module',
-    'AP_Button',
-    'AP_ICEngine',
-]
+with open("Tools/ardupilotwaf/directories_list") as f:
+    COMMON_VEHICLE_DEPENDENT_LIBRARIES = [l.rstrip() for l in f]
 
 def get_legacy_defines(sketch_name):
     return [
