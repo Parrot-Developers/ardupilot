@@ -129,3 +129,18 @@ LOCAL_LDLIBS := \
 
 include $(BUILD_EXECUTABLE)
 
+###############################################################################
+# ardupilot headers
+###############################################################################
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := ardupilot-headers
+LOCAL_DESCRIPTION := headers to be used by the export library
+LOCAL_CATEGORY_PATH := $(APM_COMMON_CATEGORY_PATH)
+
+LOCAL_EXPORT_C_INCLUDES := \
+	$(LOCAL_PATH)/../../libraries/AP_Module/
+
+include $(BUILD_CUSTOM)
+
