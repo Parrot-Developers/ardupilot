@@ -122,7 +122,7 @@ LOCAL_LIBRARIES := \
 
 LOCAL_COPY_FILES = \
 	50-apm-plane-disco.rc:etc/boxinit.d/ \
-	../Frame_params/Parrot_Disco.param:etc/arduplane/disco.parm
+	../Frame_params/Parrot_Disco/Parrot_Disco.param:etc/arduplane/disco.parm
 
 LOCAL_LDLIBS := \
 	-ldl
