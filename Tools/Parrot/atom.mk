@@ -11,7 +11,7 @@ APM_COMMON_CXXFLAGS := \
 	-D_GNU_SOURCE \
 	-DCONFIG_HAL_BOARD=HAL_BOARD_LINUX \
 	-DF_CPU= \
-	-DGIT_VERSION=\"$(shell cd $(LOCAL_PATH); git rev-parse --short=8)\" \
+	-DGIT_VERSION=\"$(shell cd $(LOCAL_PATH); git rev-parse --short=8 HEAD)\" \
 	-DHAVE_CMATH_ISFINITE \
 	-DHAVE_LIBDL \
 	-DMAVLINK_PROTOCOL_VERSION=2 \
