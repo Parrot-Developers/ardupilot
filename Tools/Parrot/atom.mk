@@ -83,6 +83,9 @@ LOCAL_C_INCLUDES := \
 LOCAL_LIBRARIES := \
 	$(APM_COMMON_LIBRARIES)
 
+LOCAL_LDLIBS := \
+	-ldl
+
 include $(BUILD_EXECUTABLE)
 
 ###############################################################################
