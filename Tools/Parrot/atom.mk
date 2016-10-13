@@ -63,7 +63,6 @@ APM_COPTER_BEBOP_SRC_DIRS := \
 LOCAL_SRC_FILES := \
 	$(foreach dir,$(APM_COPTER_BEBOP_SRC_DIRS),$(call all-cpp-files-in,../../$(dir)))
 
-LOCAL_COPY_FILES = 50-arducopter.rc:etc/boxinit.d/
 ifeq ($(CONFIG_ARDUPILOT_MILOS),y)
 LOCAL_COPY_FILES += ../Frame_params/Parrot_Bebop2.param:etc/arducopter/bebop.parm
 else
