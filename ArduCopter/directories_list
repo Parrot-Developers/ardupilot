@@ -7,6 +7,7 @@ AC_PrecLand
 AC_Sprayer
 AC_WPNav
 AP_ADSB
+AP_Avoidance
 AP_Camera
 AP_EPM
 AP_Frsky_Telem
